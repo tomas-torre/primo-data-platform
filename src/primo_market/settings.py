@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from dotenv import load_dotenv
 import yaml
+from dotenv import load_dotenv
 
 
 @dataclass(frozen=True)
