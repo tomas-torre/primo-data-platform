@@ -1,0 +1,33 @@
+bundle:
+  name: primo-data-platform
+
+include:
+  - resources/*.yml
+
+variables:
+  cluster_id:
+    description: ID de um cluster existente compatível com os notebooks PySpark.
+  catalog:
+    description: Catalog Unity Catalog selecionado pelo target.
+  project_src_path:
+    description: Caminho do diretório src no Git Folder/Workspace.
+    default: /Workspace/Shared/primo-data-platform/src
+  products_file:
+    description: Caminho do YAML de produtos selecionados no Workspace.
+    default: /Workspace/Shared/primo-data-platform/config/selected_products.yml
+
+workspace:
+  host: ${env.DATABRICKS_HOST}
+
+targets:
+  dev:
+    mode: development
+    default: true
+    variables:
+      catalog: primo_dev
+      cluster_id: ${env.DATABRICKS_CLUSTER_ID}
+  prod:
+    mode: production
+    variables:
+      catalog: primo_prod
+      cluster_id: ${env.DATABRICKS_CLUSTER_ID}

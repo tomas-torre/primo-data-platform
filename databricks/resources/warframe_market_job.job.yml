@@ -1,0 +1,36 @@
+resources:
+  jobs:
+    warframe_market_job:
+      name: primo-data-platform-warframe-market
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      schedule:
+        quartz_cron_expression: "0 0/30 * * * ?"
+        timezone_id: "UTC"
+        pause_status: PAUSED
+      tasks:
+        - task_key: collect_source
+          existing_cluster_id: ${var.cluster_id}
+          notebook_task:
+            notebook_path: ../01_bronze/collect.py
+            base_parameters:
+              project_src_path: ${var.project_src_path}
+              products_file: ${var.products_file}
+              catalog: ${var.catalog}
+        - task_key: normalize_silver
+          depends_on:
+            - task_key: collect_source
+          existing_cluster_id: ${var.cluster_id}
+          notebook_task:
+            notebook_path: ../02_silver/normalize.py
+            base_parameters:
+              project_src_path: ${var.project_src_path}
+              catalog: ${var.catalog}
+        - task_key: build_gold
+          depends_on:
+            - task_key: normalize_silver
+          existing_cluster_id: ${var.cluster_id}
+          notebook_task:
+            notebook_path: ../03_gold/aggregate.py
+            base_parameters:
+              catalog: ${var.catalog}

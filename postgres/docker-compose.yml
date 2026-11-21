@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: primo-market-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-primo_market}
+      POSTGRES_USER: ${POSTGRES_USER:-primo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-primo_local_change_me}
+      TZ: UTC
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - primo_market_pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-primo} -d ${POSTGRES_DB:-primo_market}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  primo_market_pgdata:

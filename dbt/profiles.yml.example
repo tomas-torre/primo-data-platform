@@ -1,0 +1,23 @@
+primo_market:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: primo
+      password: primo_local_change_me
+      port: 5432
+      dbname: primo_market
+      schema: public
+      threads: 4
+      connect_timeout: 10
+    prod:
+      type: postgres
+      host: "{{ env_var('DBT_PROD_HOST') }}"
+      user: "{{ env_var('DBT_PROD_USER') }}"
+      password: "{{ env_var('DBT_PROD_PASSWORD') }}"
+      port: "{{ env_var('DBT_PROD_PORT', '5432') | int }}"
+      dbname: "{{ env_var('DBT_PROD_DB') }}"
+      schema: public
+      threads: 4
+      connect_timeout: 10

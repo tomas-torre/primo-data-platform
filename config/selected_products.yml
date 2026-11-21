@@ -1,0 +1,12 @@
+# Configure aqui os Sets que serão monitorados. A API V2 expande os componentes.
+# product_slug deve ser o slug da raiz do Set no Warframe.market.
+products:
+  - product_slug: soma_prime_set
+    product_name: Soma Prime
+    category: weapon
+    enabled: true
+
+  - product_slug: limbo_prime_set
+    product_name: Limbo Prime
+    category: warframe
+    enabled: true

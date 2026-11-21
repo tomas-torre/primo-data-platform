@@ -1,0 +1,16 @@
+{
+  "items": [
+    {"item_slug": "soma_prime_set", "product_slug": "soma_prime_set", "product_name": "Soma Prime", "category": "weapon", "item_name": "Soma Prime Set", "item_role": "set"},
+    {"item_slug": "soma_prime_blueprint", "product_slug": "soma_prime_set", "product_name": "Soma Prime", "category": "weapon", "item_name": "Soma Prime Blueprint", "item_role": "blueprint"},
+    {"item_slug": "soma_prime_barrel", "product_slug": "soma_prime_set", "product_name": "Soma Prime", "category": "weapon", "item_name": "Soma Prime Barrel", "item_role": "barrel"},
+    {"item_slug": "soma_prime_receiver", "product_slug": "soma_prime_set", "product_name": "Soma Prime", "category": "weapon", "item_name": "Soma Prime Receiver", "item_role": "receiver"},
+    {"item_slug": "soma_prime_stock", "product_slug": "soma_prime_set", "product_name": "Soma Prime", "category": "weapon", "item_name": "Soma Prime Stock", "item_role": "stock"},
+    {"item_slug": "limbo_prime_set", "product_slug": "limbo_prime_set", "product_name": "limbo Prime", "category": "warframe", "item_name": "limbo Prime Set", "item_role": "set"},
+    {"item_slug": "limbo_prime_blueprint", "product_slug": "limbo_prime_set", "product_name": "limbo Prime", "category": "warframe", "item_name": "limbo Prime Blueprint", "item_role": "blueprint"},
+    {"item_slug": "limbo_prime_neuroptics_blueprint", "product_slug": "limbo_prime_set", "product_name": "limbo Prime", "category": "warframe", "item_name": "limbo Prime Neuroptics Blueprint", "item_role": "neuroptics"},
+    {"item_slug": "limbo_prime_chassis_blueprint", "product_slug": "limbo_prime_set", "product_name": "limbo Prime", "category": "warframe", "item_name": "limbo Prime Chassis Blueprint", "item_role": "chassis"},
+    {"item_slug": "limbo_prime_systems_blueprint", "product_slug": "limbo_prime_set", "product_name": "limbo Prime", "category": "warframe", "item_name": "limbo Prime Systems Blueprint", "item_role": "systems"}
+  ],
+  "user_agent": "PrimoDataPlatform/0.1.0 (+https://github.com/SEU_USUARIO/primo-data-platform)",
+  "requests_per_second": 2
+}

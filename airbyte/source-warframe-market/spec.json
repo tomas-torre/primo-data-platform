@@ -1,0 +1,42 @@
+{
+  "documentationUrl": "https://docs.warframe.market/",
+  "connectionSpecification": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Warframe.market Source",
+    "type": "object",
+    "required": ["items", "user_agent"],
+    "additionalProperties": false,
+    "properties": {
+      "items": {
+        "type": "array",
+        "title": "Items to collect",
+        "description": "Lista de slugs individuais; cadastre Set e componentes.",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": ["item_slug", "product_slug", "product_name", "category"],
+          "properties": {
+            "item_slug": {"type": "string"},
+            "product_slug": {"type": "string"},
+            "product_name": {"type": "string"},
+            "category": {"type": "string", "enum": ["weapon", "warframe"]},
+            "item_name": {"type": "string"},
+            "item_role": {"type": "string"}
+          }
+        }
+      },
+      "user_agent": {
+        "type": "string",
+        "title": "Identifiable User-Agent",
+        "default": "PrimoDataPlatform/0.1.0 (contact: configure-your-contact)"
+      },
+      "requests_per_second": {
+        "type": "number",
+        "title": "Requests per second",
+        "default": 2,
+        "minimum": 0.1,
+        "maximum": 2
+      }
+    }
+  }
+}

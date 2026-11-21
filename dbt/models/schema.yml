@@ -1,0 +1,50 @@
+version: 2
+
+sources:
+  - name: bronze
+    schema: bronze
+    tables:
+      - name: api_response
+        description: Respostas JSON brutas da API do Warframe.market, imutáveis por execução e item.
+      - name: execution_log
+        description: Controle das execuções do coletor.
+      - name: item_execution_log
+        description: Status de cada item consultado em uma execução.
+  - name: airbyte
+    schema: "{{ var('airbyte_schema', 'airbyte') }}"
+    tables:
+      - name: market_order_snapshots
+        description: Um registro Airbyte por item e execução, com response JSONB contendo as ofertas.
+
+models:
+  - name: stg_catalog_items
+    columns:
+      - name: item_slug
+        tests: [not_null]
+  - name: stg_api_orders
+    columns:
+      - name: order_id
+        tests: [not_null]
+      - name: order_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['buy', 'sell']
+  - name: dim_product
+    columns:
+      - name: product_slug
+        tests: [not_null, unique]
+  - name: dim_item
+    columns:
+      - name: item_slug
+        tests: [not_null, unique]
+  - name: dim_player
+    columns:
+      - name: player_id
+        tests: [not_null, unique]
+  - name: fact_item_price_snapshot
+    columns:
+      - name: execution_id
+        tests: [not_null]
+      - name: item_slug
+        tests: [not_null]
