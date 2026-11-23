@@ -5,6 +5,17 @@ bundle:
 include:
   - resources/*.yml
 
+sync:
+  paths:
+    - .
+    - ../config
+
+artifacts:
+  primo_market:
+    type: whl
+    path: ..
+    build: python -m build --wheel
+
 variables:
   environment:
     description: Runtime environment used by notebooks.
@@ -15,7 +26,7 @@ variables:
 
   products_file:
     description: Path to the selected products YAML in the Workspace.
-    default: /Workspace/Shared/primo-data-platform/config/selected_products.yml
+    default: ${workspace.file_path}/../config/selected_products.yml
 
 targets:
   dev:
