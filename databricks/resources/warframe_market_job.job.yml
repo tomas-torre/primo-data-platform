@@ -1,36 +1,134 @@
+
 resources:
   jobs:
     warframe_market_job:
       name: primo-data-platform-warframe-market
       max_concurrent_runs: 1
       timeout_seconds: 3600
+
+      # Run every 30 minutes at fixed clock times (HH:00 and HH:30).
+      # Timezone: Brasília (UTC-3).
       schedule:
         quartz_cron_expression: "0 0/30 * * * ?"
-        timezone_id: "UTC"
-        pause_status: PAUSED
+        timezone_id: "America/Sao_Paulo"
+        pause_status: UNPAUSED
+
+      parameters:
+        - name: env
+          default: ${var.environment}
+
+        - name: products_file
+          default: ${var.products_file}
+
       tasks:
-        - task_key: collect_source
-          existing_cluster_id: ${var.cluster_id}
+        # BRONZE - COLLECTION
+        - task_key: collect_warframe_market
+          environment_key: primo_market_env
           notebook_task:
-            notebook_path: ../01_bronze/collect.py
-            base_parameters:
-              project_src_path: ${var.project_src_path}
-              products_file: ${var.products_file}
-              catalog: ${var.catalog}
-        - task_key: normalize_silver
+            notebook_path: ../01_bronze/00_collect_warframe_market.ipynb
+
+        # BRONZE - INGESTION
+        - task_key: ingest_warframe_market
           depends_on:
-            - task_key: collect_source
-          existing_cluster_id: ${var.cluster_id}
+            - task_key: collect_warframe_market
           notebook_task:
-            notebook_path: ../02_silver/normalize.py
-            base_parameters:
-              project_src_path: ${var.project_src_path}
-              catalog: ${var.catalog}
-        - task_key: build_gold
+            notebook_path: ../01_bronze/01_ingest_warframe_market.ipynb
+
+        - task_key: ingest_execution_manifest
           depends_on:
-            - task_key: normalize_silver
-          existing_cluster_id: ${var.cluster_id}
+            - task_key: collect_warframe_market
           notebook_task:
-            notebook_path: ../03_gold/aggregate.py
-            base_parameters:
-              catalog: ${var.catalog}
+            notebook_path: ../01_bronze/02_ingest_execution_manifest.ipynb
+
+        # SILVER - STAGING
+        - task_key: stg_wfm_catalog
+          depends_on:
+            - task_key: ingest_warframe_market
+          notebook_task:
+            notebook_path: ../02_silver/01_staging/01_stg_wfm_catalog.ipynb
+
+        - task_key: stg_wfm_orders
+          depends_on:
+            - task_key: ingest_warframe_market
+          notebook_task:
+            notebook_path: ../02_silver/01_staging/02_stg_wfm_orders.ipynb
+
+        # SILVER - INTERMEDIATE
+        - task_key: dim_item
+          depends_on:
+            - task_key: stg_wfm_catalog
+          notebook_task:
+            notebook_path: ../02_silver/02_intermediate/02_dim_item.ipynb
+
+        - task_key: dim_player
+          depends_on:
+            - task_key: stg_wfm_orders
+          notebook_task:
+            notebook_path: ../02_silver/02_intermediate/03_dim_player.ipynb
+
+        - task_key: dim_execution
+          depends_on:
+            - task_key: ingest_execution_manifest
+          notebook_task:
+            notebook_path: ../02_silver/02_intermediate/04_dim_execution.ipynb
+
+        - task_key: fact_order_observation
+          depends_on:
+            - task_key: stg_wfm_orders
+            - task_key: dim_item
+            - task_key: dim_player
+          notebook_task:
+            notebook_path: ../02_silver/02_intermediate/01_fact_order_observation.ipynb
+
+        # GOLD - INTERMEDIATE
+        - task_key: int_item_price_quality
+          depends_on:
+            - task_key: fact_order_observation
+          notebook_task:
+            notebook_path: ../03_gold/01_intermediate/01_int_item_price_quality.ipynb
+
+        # GOLD - MARTS
+        - task_key: mart_item_price_history
+          depends_on:
+            - task_key: int_item_price_quality
+            - task_key: dim_item
+          notebook_task:
+            notebook_path: ../03_gold/02_marts/01_mart_item_price_history.ipynb
+
+        - task_key: mart_item_price_summary
+          depends_on:
+            - task_key: mart_item_price_history
+          notebook_task:
+            notebook_path: ../03_gold/02_marts/02_mart_item_price_summary.ipynb
+
+        # GOLD - REPORTING
+        - task_key: rel_market_overview
+          depends_on:
+            - task_key: mart_item_price_summary
+            - task_key: dim_execution
+          notebook_task:
+            notebook_path: ../03_gold/03_reporting/01_rel_market_overview.ipynb
+
+        - task_key: rel_item_price_history
+          depends_on:
+            - task_key: mart_item_price_history
+            - task_key: mart_item_price_summary
+            - task_key: rel_market_overview
+            - task_key: dim_execution
+          notebook_task:
+            notebook_path: ../03_gold/03_reporting/02_rel_item_price_history.ipynb
+
+        - task_key: rel_market_quality
+          depends_on:
+            - task_key: int_item_price_quality
+            - task_key: dim_execution
+          notebook_task:
+            notebook_path: ../03_gold/03_reporting/03_rel_market_quality.ipynb
+
+      # SERVERLESS ENVIRONMENT
+      environments:
+        - environment_key: primo_market_env
+          spec:
+            environment_version: "5"
+            dependencies:
+              - ../../dist/*.whl
