@@ -26,7 +26,7 @@ variables:
 
   products_file:
     description: Path to the selected products YAML in the Workspace.
-    default: ${workspace.file_path}/../config/selected_products.yml
+    default: ${workspace.file_path}/config/selected_products.yml
 
 targets:
   dev:
