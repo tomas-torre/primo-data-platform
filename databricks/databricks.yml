@@ -42,6 +42,8 @@ targets:
     mode: production
     workspace:
       root_path: ~/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      service_principal_name: "537ca8c0-49d9-4524-bc69-fdc260425c15"  
     variables:
       environment: prod
       # cluster_id: ${env.DATABRICKS_CLUSTER_ID}
