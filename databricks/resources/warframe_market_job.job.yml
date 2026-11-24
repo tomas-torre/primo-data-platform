@@ -17,9 +17,9 @@ resources:
         - name: env
           default: ${var.environment}
 
-        - name: products_file
-          default: ${var.products_file}
-
+        - name: selected_products_path
+          default: ${var.selected_products_path}
+          
       tasks:
         # BRONZE - COLLECTION
         - task_key: collect_warframe_market

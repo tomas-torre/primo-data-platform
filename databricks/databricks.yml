@@ -24,7 +24,7 @@ variables:
     description: Path to the project source directory in the Databricks Workspace.
     default: /Workspace/Shared/primo-data-platform/src
 
-  products_file:
+  selected_products_path:
     description: Path to the selected products YAML in the Workspace.
     default: ${workspace.file_path}/config/selected_products.yml
 
