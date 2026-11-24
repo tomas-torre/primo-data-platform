@@ -33,6 +33,7 @@ jobs:
       DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
       DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
       DATABRICKS_AUTH_TYPE: oauth-m2m
+      DATABRICKS_REPO_PATH: ${{ vars.DATABRICKS_REPO_PATH }}
 
     steps:
       - uses: actions/checkout@v4
@@ -46,3 +47,13 @@ jobs:
         run: databricks bundle validate -t prod
       - name: Deploy bundle
         run: databricks bundle deploy -t prod
+      - name: Validate Git folder configuration
+        run: |
+          if [ -z "$DATABRICKS_REPO_PATH" ]; then
+            echo "DATABRICKS_REPO_PATH não foi configurado."
+            exit 1
+          fi
+      - name: Update production Git folder
+        run: databricks repos update "$DATABRICKS_REPO_PATH" --branch main
+      - name: Verify production Git folder
+        run: databricks repos get "$DATABRICKS_REPO_PATH"        
