@@ -1,108 +1,186 @@
 # primo-data-platform
 
-An end-to-end data engineering project built around the **Warframe Market API V2**. The project collects market data, stores raw API responses, transforms them through a Medallion architecture, and prepares curated datasets for market analysis.
+**End-to-end data engineering platform for collecting, processing, and analyzing Warframe Market data.**
 
-The repository currently contains a working Databricks implementation. A second implementation based on PostgreSQL, Airbyte, and dbt is planned as an alternative architecture.
+The project implements an automated data pipeline around the **Warframe Market API V2**, from API collection and raw-data preservation to curated analytical datasets. Its active implementation runs on **Databricks**, following the Medallion architecture (Bronze, Silver, and Gold), with Git-based development, automated quality checks, and CI/CD deployment through GitHub Actions.
 
-## Project goals
+The repository also provides the foundation for a second implementation using PostgreSQL, Airbyte, and dbt, intended to reproduce the same analytical outputs and enable an architectural comparison.
+
+
+## Project overview
+
+The platform is designed to:
 
 - Collect Warframe Market data through API V2.
-- Preserve raw responses and execution metadata for traceability.
-- Build a Bronze, Silver, and Gold data model.
-- Automate ingestion and transformation workflows.
+- Preserve raw responses and execution metadata for traceability and reprocessing.
+- Transform source data through Bronze, Silver, and Gold layers.
+- Build facts, dimensions, analytical marts, and reporting datasets.
+- Orchestrate and automate ingestion the workflow with Databricks Jobs.
 - Apply version control and CI/CD practices to data infrastructure.
+- Maintain separate development and production branches and deployment environments.
 - Compare a Databricks Lakehouse implementation with an open-source ELT stack.
 
-## Current architecture
+## Architecture
 
 ```mermaid
 flowchart TD
     A[Warframe Market API V2] --> B[Python Collector]
     C[selected_products.yml] --> B
-    B --> D[Unity Catalog Volume]
-    D --> E[Bronze Delta Tables]
-    E --> F[Silver Models]
-    F --> G[Gold Marts and Reports]
-    H[GitHub Actions] --> I[Databricks Asset Bundles]
-    I --> J[Databricks Job]
-    J -. orchestrates .-> B
-    J -. orchestrates .-> E
-    J -. orchestrates .-> F
-    J -. orchestrates .-> G
+    D[Databricks Secrets] --> B
+
+    B --> E[Unity Catalog Volume]
+    E --> F[Bronze Delta Tables]
+    F --> G[Silver Staging]
+    G --> H[Silver Intermediate]
+    H --> I[Gold Intermediate]
+    I --> J[Gold Marts]
+    J --> K[Gold Reporting]
+
+    L[Databricks Job] -. orchestrates .-> B
+    L -. orchestrates .-> F
+    L -. orchestrates .-> G
+    L -. orchestrates .-> H
+    L -. orchestrates .-> I
+    L -. orchestrates .-> J
+    L -. orchestrates .-> K
+
+    M[GitHub: develop / main] --> N[GitHub Actions]
+    N --> O[Quality checks]
+    O --> P[Databricks Asset Bundles]
+    P --> Q[Databricks Jobs and resources]
+    N --> R[Production Git folder sync]
 ```
 
 The current implementation uses Databricks, PySpark, Delta Lake, Unity Catalog, Databricks Asset Bundles, and GitHub Actions.
 
-## Implementation status
 
-### Implemented
+### Technology stack
 
-- Databricks development environment and Unity Catalog.
-- Bronze, Silver, and Gold catalog organization.
+| Area | Technologies |
+|---|---|
+| API ingestion | Python, Warframe Market API V2 |
+| Data processing | PySpark, Databricks |
+| Storage | Delta Lake, Unity Catalog Volumes |
+| Data architecture | Medallion (Bronze, Silver, Gold) |
+| Orchestration | Databricks Workflows / Jobs |
+| Packaging | Python wheel |
+| CI | GitHub Actions, Ruff, pytest |
+| CD | Databricks CLI, Databricks Asset Bundles |
+| Version control | Git, GitHub (`develop` and `main`) |
+| Alternative architecture | PostgreSQL, Airbyte, dbt (planned) |
+
+## Current implementation
+
+### Implemented and operational
+
 - Warframe Market API V2 collector.
-- YAML-based product selection.
-- Raw JSONL/GZIP storage and execution manifests.
-- Bronze ingestion and Silver/Gold transformations.
+- YAML-driven product selection (`config/selected_products.yml`).
+- API identification value retrieved from Databricks Secrets.
+- Raw JSONL/GZIP files and execution manifests stored in a Unity Catalog Volume.
+- Bronze ingestion of API responses and execution metadata.
+- Silver staging, intermediate facts, and dimensions.
+- Gold intermediate quality model, marts, and reporting datasets.
 - Databricks Job with 15 dependent tasks.
-- Serverless job environment.
-- GitHub Actions CI/CD deployment using a Service Principal.
+- Serverless job environment, Python wheel dependency, queueing, and concurrency control.
 - Recurring schedule configured for every 30 minutes.
+- GitHub Actions quality gates using Ruff and pytest.
+- Databricks Asset Bundles deployment for development and production.
+- Branch-based workflow: `develop` for DEV and `main` for PROD.
+- Production Git folder synchronization to `main` as part of the production deployment workflow.
+- Initial table creation and incremental persistence patterns using Delta writes and `MERGE`.
 
-### Planned / in progress
+The complete Databricks workflow has been executed successfully. The project is configured for recurring automated execution, and its deployment workflows are implemented in GitHub Actions.
 
-- Validate stability across consecutive scheduled executions.
-- Expand monitored products and collection configuration.
-- Improve automated data quality tests, alerting, and observability.
-- Build a PostgreSQL + Airbyte + dbt implementation.
-- Compare both architectures in cost, performance, maintainability, and operational complexity.
-- Add analytical consumption examples, including Power BI.
+### Planned improvements
 
-> The complete 15-task Databricks workflow has succeeded in a manual execution. The recurring schedule is enabled, but its long-running stability is still being validated.
+- Implement the equivalent PostgreSQL + Airbyte + dbt pipeline.
+- Reconcile outputs between the Databricks and open-source implementations.
+- Benchmark execution time, cost, scalability, and operational complexity.
+- Expand automated data-quality coverage and operational alerting.
+- Add analytical consumption examples, such as Power BI dashboards.
+
+## Databricks data layers
+
+| Layer | Main purpose | Examples |
+|---|---|---|
+| Bronze | Preserve source data and ingestion metadata | `raw_api_responses`, `execution_manifest`, `item_execution`, `ingestion_log` |
+| Silver – Staging | Parse and standardize API entities | `stg_wfm_catalog`, `stg_wfm_orders` |
+| Silver – Intermediate | Create analytical facts and dimensions | `fact_order_observation`, `dim_item`, `dim_player`, `dim_execution` |
+| Gold – Intermediate | Derive quality indicators | `int_item_price_quality` |
+| Gold – Marts | Publish reusable analytical models | `mart_item_price_history`, `mart_item_price_summary` |
+| Gold – Reporting | Provide reporting-oriented datasets | `rel_market_overview`, `rel_item_price_history`, `rel_market_quality` |
+
+The detailed model responsibilities, notebook paths, dependencies, and operational design are documented in [`docs/PROJECT_DOCUMENTATION.md`](docs/PROJECT_DOCUMENTATION.md).
+
+
+## Orchestration
+
+The Databricks Job coordinates **15 tasks** across collection, ingestion, Silver transformations, Gold models, and reporting. Dependencies are declared explicitly, allowing independent tasks to run in parallel after their prerequisites complete.
+
+The recurring schedule is configured with the Quartz expression:
+
+```text
+0 0/30 * * * ?
+```
+
+- Frequency: every 30 minutes.
+- Timezone: `America/Sao_Paulo`.
+- Maximum concurrent runs: 1.
+- Queueing: enabled.
+
+
+## CI/CD workflow
+
+The repository uses separate deployment workflows, which run code-quality checks before deployment:
+
+| Branch | Environment | Workflow |
+|---|---|---|
+| `develop` | Development | `.github/workflows/deploy-dev.yml` |
+| `main` | Production | `.github/workflows/deploy-prod.yml` |
+        
+> OBS: The production workflow additionally validates `DATABRICKS_REPO_PATH`, updates the production Databricks Git folder to branch `main`, and verifies the resulting repository configuration. This is separate from Asset Bundle deployment: the bundle deploys Databricks resources, while the Git folder update synchronizes the checked-out source code.
 
 ## Repository structure
 
 ```text
 primo-data-platform/
-├── config/                  # Collection configuration
-├── databricks/
-│   ├── 01_bronze/            # Collection and ingestion
-│   ├── 02_silver/            # Staging and intermediate models
-│   ├── 03_gold/              # Marts and reporting
-│   ├── resources/            # Databricks Job resources
-│   └── utils/                # Shared notebook configuration
 ├── .github/
-│   └── workflows/            # CI/CD workflows
+│   └── workflows/
+│       ├── deploy-dev.yml
+│       └── deploy-prod.yml
+├── airbyte/
+│   └── source-warframe-market/
+├── config/
+│   └── selected_products.yml
+├── databricks/
+│   ├── 01_bronze/
+│   ├── 02_silver/
+│   │   ├── 01_staging/
+│   │   └── 02_intermediate/
+│   ├── 03_gold/
+│   │   ├── 01_intermediate/
+│   │   ├── 02_marts/
+│   │   └── 03_reporting/
+│   ├── resources/
+│   └── utils/
+├── dbt/
+├── docs/
+│   └── PROJECT_DOCUMENTATION.md
+├── postgres/
+├── sql/
+│   └── postgres/
+├── src/
+│   └── primo_market/
+├── tests/
+├── .env.example
+├── Makefile
+├── pyproject.toml
+├── requirements-dbt.txt
 └── README.md
 ```
 
-## Scheduling and orchestration
-
-The Databricks workflow contains 15 tasks connected through explicit dependencies. It runs on Databricks Serverless and is configured to execute every 30 minutes (`HH:00` and `HH:30`) in the `America/Sao_Paulo` timezone. Maximum concurrent runs is set to one.
-
-## Alternative architecture
-
-A second implementation is planned using:
-
-```text
-Warframe Market API
-        ↓
-Airbyte custom connector
-        ↓
-PostgreSQL raw schema
-        ↓
-dbt staging → intermediate → marts
-        ↓
-Analytical consumption
-```
-
-This path will reproduce the same business outputs to enable a meaningful comparison with the Databricks implementation. It is not yet represented as a completed pipeline.
-
-## Documentation
-
-The detailed technical documentation is maintained separately:
-
-- [`docs/PROJECT_DOCUMENTATION.md`](docs/PROJECT_DOCUMENTATION.md) — architecture, implementation details, data layers, orchestration, CI/CD, configuration, and roadmap.
-
 ## Project status
 
-This is an evolving portfolio project focused on practical data engineering: API ingestion, Lakehouse modeling, orchestration, governance, deployment automation, and architecture comparison.
+The Databricks implementation is the operational end-to-end pipeline. It includes automated collection and transformation, scheduled orchestration, version-controlled code, quality gates, and automated deployment.
+
+The next major development milestone is to complete the PostgreSQL + Airbyte + dbt implementation and compare both architectures using equivalent data and business definitions.
